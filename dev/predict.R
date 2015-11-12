@@ -10,8 +10,8 @@ library(dplyr)
 ## Import
 
 setwd("~/git/kaggle_walmart/data")
-df.train.raw <- read.csv("train.csv")
-df.test.raw <- read.csv("test.csv")
+df.train <- read.csv("train.csv")
+df.test <- read.csv("test.csv")
 
 
 
@@ -19,27 +19,33 @@ df.test.raw <- read.csv("test.csv")
 
 # 1. Split in tidier data sets: df.inventory, df.train and df.test
 
-# Build df.inventory with columns Upc, DepartmentDescription, FinelineNumber from both df.train.raw and df.test.raw
+# Build df.inventory with columns Upc, DepartmentDescription, FinelineNumber from both df.train and df.test
 df.inventory <- unique(
     rbind(
-        subset(df.train.raw, select=c(Upc, DepartmentDescription, FinelineNumber)),
-        subset(df.test.raw, select=c(Upc, DepartmentDescription, FinelineNumber))
+        subset(df.train, select=c(Upc, DepartmentDescription, FinelineNumber)),
+        subset(df.test, select=c(Upc, DepartmentDescription, FinelineNumber))
     )
 )
 
 # Drop DepartmentDescription and FinelineNumber from main data set since they belong in a separate data set df.inventory
-df.train <- subset(df.train.raw, select=-c(DepartmentDescription, FinelineNumber))
-df.test <- subset(df.test.raw, select=-c(DepartmentDescription, FinelineNumber))
+df.train <- subset(df.train, select=-c(DepartmentDescription, FinelineNumber))
+df.test <- subset(df.test, select=-c(DepartmentDescription, FinelineNumber))
 
 
 # 2. Check for NAs
 # Only Upc and FinelineNumber columns contain NA
 
 
-# TODO: 3. We consider each VisitNumber as a single observation (instead of Visitnumber-Upc combination)
+# 3. We consider each VisitNumber as a single observation (instead of Visitnumber-Upc combination)
 # and convert the data to exactly one observation per line
 
-#mutate(df.train, sum = sum(ScanCount), by=c(VisitNumber,Upc)) -> incorrect
-# See http://www3.nd.edu/~steve/computing_with_data/24_dplyr/dplyr.html
+# In case of multiple lines with same VisitNumber-Upc combination, join together and take sum 
+df.train <- aggregate(ScanCount ~ ., data=df.train, FUN=sum) %>% arrange(VisitNumber, Upc)
+df.test <- aggregate(ScanCount ~ ., data=df.test, FUN=sum) %>% arrange(VisitNumber, Upc)
 
-df.out <- spread(data=df.train, key=Upc, value=ScanCount, fill=0)
+
+
+# DEBUG
+head(df.train)
+head(df.test)
+df.tmp <- spread(data=df.train, key=Upc, value=ScanCount, fill=0)
