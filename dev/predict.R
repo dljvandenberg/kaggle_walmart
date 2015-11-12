@@ -47,5 +47,6 @@ df.test <- aggregate(ScanCount ~ ., data=df.test, FUN=sum) %>% arrange(VisitNumb
 
 # DEBUG
 head(df.train)
-head(df.test)
+names(df.train)
+lapply(df.train, class)
 df.tmp <- spread(data=df.train, key=Upc, value=ScanCount, fill=0)
