@@ -10,8 +10,8 @@ library(dplyr)
 ## Import
 
 setwd("~/git/kaggle_walmart/data")
-df.train <- read.csv("train.csv")
-df.test <- read.csv("test.csv")
+df.train <- read.csv("train.csv", colClasses=c("factor", "integer", "factor", "factor", "integer", "factor", "factor"))
+df.test <- read.csv("test.csv", colClasses=c("integer", "factor", "factor", "integer", "factor", "factor"))
 
 
 
@@ -44,7 +44,7 @@ df.train <- aggregate(ScanCount ~ ., data=df.train, FUN=sum) %>% arrange(VisitNu
 df.test <- aggregate(ScanCount ~ ., data=df.test, FUN=sum) %>% arrange(VisitNumber, Upc)
 
 
-
+# TODO: set correct class at import
 # DEBUG
 head(df.train)
 names(df.train)
