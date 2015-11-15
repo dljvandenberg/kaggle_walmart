@@ -58,30 +58,31 @@ df.test.raw <- read.csv("test.csv", colClasses=c("integer", "factor", "factor", 
 
 # Divide into training, validation and testing set. And drop VisitNumber column
 set.seed(1234)
-m.train.simple <- createDataPartition(df.train.raw$TripType, p=.1, list = FALSE)
+m.train.simple <- createDataPartition(df.train.raw$TripType, p=.5, list = FALSE)
 df.train.simple <- subset(df.train.raw, select=-c(VisitNumber))[m.train.simple,]
 df.validate.simple <- subset(df.train.raw, select=-c(VisitNumber))[-m.train.simple,]
 df.test.simple <- subset(df.test.raw, select=-c(VisitNumber))
 
 # Train models
-model.simple.rf <- train(factor(TripType) ~ ., data=df.train.simple, method="rf")
+model.simple.rpart.1 <- train(TripType ~ DepartmentDescription, data=df.train.simple, method="rpart")
+model.simple.rpart.2 <- train(TripType ~ Weekday + ScanCount + DepartmentDescription, data=df.train.simple, method="rpart")
 
-# DEBUG
-model.simple <- train(TripType ~ DepartmentDescription, data=df.train.simple, method="rpart")
+# DEBUG: not enough memory -> factors Upc and FinelineNumber have too many levels
+#model.simple <- train(TripType ~ ., data=df.train.simple, method="rf")
+#model.simple <- train(TripType ~ FinelineNumber, data=df.train.simple, method="rpart")
 
+# Model details
+model.simple.rpart.1
+model.simple.rpart.2
 
+# Confusion table and accuracy for validation set
+results.validation.simple.rpart.1 <- predict(model.simple.rpart.1, newdata=df.validate.simple)
+results.validation.simple.rpart.2 <- predict(model.simple.rpart.2, newdata=df.validate.simple)
+table(df.validate.simple$TripType, results.validation.simple.rpart.1)
+table(df.validate.simple$TripType, results.validation.simple.rpart.2)
+sum(df.validate.simple$TripType == results.validation.simple.rpart.1) / length(df.validate.simple$TripType)
+sum(df.validate.simple$TripType == results.validation.simple.rpart.2) / length(df.validate.simple$TripType)
 
-# # Model details
-# model.simple.rf
-# model.simple.rf$finalModel
-# # Tree model visualization
-# library(rattle)
-# fancyRpartPlot(model.simple.rf$finalModel)
-# # Predict
-# test.predictions.rf <- predict(model.simple.rf, newdata=df.validate.simple)
-# # Confusion table and accuracy for testing set
-# list.testing.results <- predict(model.best, newdata=df.testing)
-# table(df.testing$classe, list.testing.results)
-# sum(df.testing$classe == list.testing.results) / length(df.testing$classe)
-# # Most important variables
-# varImp(model.best)
+# Most important variables
+varImp(model.simple.rpart.1)
+varImp(model.simple.rpart.2)
