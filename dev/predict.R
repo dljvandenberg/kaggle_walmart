@@ -62,31 +62,49 @@ m.train.simple <- createDataPartition(df.train.raw$TripType, p=.1, list = FALSE)
 df.train.simple <- subset(df.train.raw, select=-c(VisitNumber))[m.train.simple,]
 df.validate.simple <- subset(df.train.raw, select=-c(VisitNumber))[-m.train.simple,]
 df.test.simple <- subset(df.test.raw, select=-c(VisitNumber))
+# PROBLEM: not enough memory -> make validation set 10 times smaller
+m.validate.simple <- createDataPartition(df.train.simple$TripType, p=.1, list = FALSE)
+df.validate.simple <- df.validate.simple[m.validate.simple,]
 
-# Train models
+# Train rpart model
+# PROBLEM: not enough memory -> factors Upc and FinelineNumber have too many levels
+# model.simple <- train(TripType ~ ., data=df.train.simple, method="rf")
+set.seed(1234)
 model.simple.rpart.1 <- train(TripType ~ Weekday + ScanCount + DepartmentDescription, data=df.train.simple, method="rpart")
-model.simple.rf.1 <- train(TripType ~ Weekday + ScanCount + DepartmentDescription, data=df.train.simple, method="rf")
-
-# DEBUG: not enough memory -> factors Upc and FinelineNumber have too many levels
-#model.simple <- train(TripType ~ ., data=df.train.simple, method="rf")
 
 # Model details
 model.simple.rpart.1
-model.simple.rf.1
 
 # Save/load model to/from file
 saveRDS(model.simple.rpart.1, "./results/model.simple.rpart.1.rds")
-saveRDS(model.simple.rf.1, "./results/model.simple.rf.1.rds")
-# model <- readRDS("model_rf.rds")
+#model.simple.rpart.1 <- readRDS("./results/model.simple.rpart.1.rds")
 
 # Confusion table and accuracy for validation set
 results.validation.simple.rpart.1 <- predict(model.simple.rpart.1, newdata=df.validate.simple)
-results.validation.simple.rpart.2 <- predict(model.simple.rpart.2, newdata=df.validate.simple)
 table(df.validate.simple$TripType, results.validation.simple.rpart.1)
-table(df.validate.simple$TripType, results.validation.simple.rpart.2)
 sum(df.validate.simple$TripType == results.validation.simple.rpart.1) / length(df.validate.simple$TripType)
-sum(df.validate.simple$TripType == results.validation.simple.rpart.2) / length(df.validate.simple$TripType)
 
 # Most important variables
 varImp(model.simple.rpart.1)
-varImp(model.simple.rpart.2)
+
+
+## Idem for Random Forest model
+
+set.seed(1234)
+# PROBLEM: not enough memory -> make training set small
+m.train.simple <- createDataPartition(df.train.raw$TripType, p=.05, list = FALSE)
+df.train.simple <- subset(df.train.raw, select=-c(VisitNumber))[m.train.simple,]
+df.validate.simple <- subset(df.train.raw, select=-c(VisitNumber))[-m.train.simple,]
+df.test.simple <- subset(df.test.raw, select=-c(VisitNumber))
+# PROBLEM: not enough memory -> make validation set 10 times smaller
+m.validate.simple <- createDataPartition(df.train.simple$TripType, p=.1, list = FALSE)
+df.validate.simple <- df.validate.simple[m.validate.simple,]
+
+set.seed(1234)
+model.simple.rf.1 <- train(TripType ~ Weekday + ScanCount + DepartmentDescription, data=df.train.simple, method="rf")
+model.simple.rf.1
+saveRDS(model.simple.rf.1, "./results/model.simple.rf.1.rds")
+results.validation.simple.rf.1 <- predict(model.simple.rf.1, newdata=df.validate.simple)
+table(df.validate.simple$TripType, results.validation.simple.rf.1)
+sum(df.validate.simple$TripType == results.validation.simple.rf.1) / length(df.validate.simple$TripType)
+varImp(model.simple.rf.1)
