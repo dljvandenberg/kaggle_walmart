@@ -10,9 +10,9 @@ library(caret)
 
 ## Import
 
-setwd("~/git/kaggle_walmart/data")
-df.train.raw <- read.csv("train.csv", colClasses=c("factor", "integer", "factor", "factor", "integer", "factor", "factor"))
-df.test.raw <- read.csv("test.csv", colClasses=c("integer", "factor", "factor", "integer", "factor", "factor"))
+setwd("~/git/kaggle_walmart")
+df.train.raw <- read.csv("./data/train.csv", colClasses=c("factor", "integer", "factor", "factor", "integer", "factor", "factor"))
+df.test.raw <- read.csv("./data/test.csv", colClasses=c("integer", "factor", "factor", "integer", "factor", "factor"))
 
 
 
@@ -58,22 +58,26 @@ df.test.raw <- read.csv("test.csv", colClasses=c("integer", "factor", "factor", 
 
 # Divide into training, validation and testing set. And drop VisitNumber column
 set.seed(1234)
-m.train.simple <- createDataPartition(df.train.raw$TripType, p=.5, list = FALSE)
+m.train.simple <- createDataPartition(df.train.raw$TripType, p=.1, list = FALSE)
 df.train.simple <- subset(df.train.raw, select=-c(VisitNumber))[m.train.simple,]
 df.validate.simple <- subset(df.train.raw, select=-c(VisitNumber))[-m.train.simple,]
 df.test.simple <- subset(df.test.raw, select=-c(VisitNumber))
 
 # Train models
-model.simple.rpart.1 <- train(TripType ~ DepartmentDescription, data=df.train.simple, method="rpart")
-model.simple.rpart.2 <- train(TripType ~ Weekday + ScanCount + DepartmentDescription, data=df.train.simple, method="rpart")
+model.simple.rpart.1 <- train(TripType ~ Weekday + ScanCount + DepartmentDescription, data=df.train.simple, method="rpart")
+model.simple.rf.1 <- train(TripType ~ Weekday + ScanCount + DepartmentDescription, data=df.train.simple, method="rf")
 
 # DEBUG: not enough memory -> factors Upc and FinelineNumber have too many levels
 #model.simple <- train(TripType ~ ., data=df.train.simple, method="rf")
-#model.simple <- train(TripType ~ FinelineNumber, data=df.train.simple, method="rpart")
 
 # Model details
 model.simple.rpart.1
-model.simple.rpart.2
+model.simple.rf.1
+
+# Save/load model to/from file
+saveRDS(model.simple.rpart.1, "./results/model.simple.rpart.1.rds")
+saveRDS(model.simple.rf.1, "./results/model.simple.rf.1.rds")
+# model <- readRDS("model_rf.rds")
 
 # Confusion table and accuracy for validation set
 results.validation.simple.rpart.1 <- predict(model.simple.rpart.1, newdata=df.validate.simple)
