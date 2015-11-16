@@ -91,7 +91,6 @@ varImp(model.simple.rpart.1)
 ## Idem for Random Forest model
 
 set.seed(1234)
-# PROBLEM: not enough memory -> make training set small
 m.train.simple <- createDataPartition(df.train.raw$TripType, p=.05, list = FALSE)
 df.train.simple <- subset(df.train.raw, select=-c(VisitNumber))[m.train.simple,]
 df.validate.simple <- subset(df.train.raw, select=-c(VisitNumber))[-m.train.simple,]
@@ -101,6 +100,7 @@ m.validate.simple <- createDataPartition(df.train.simple$TripType, p=.1, list = 
 df.validate.simple <- df.validate.simple[m.validate.simple,]
 
 set.seed(1234)
+# PROBLEM: not enough memory -> make training set small -> still issue
 model.simple.rf.1 <- train(TripType ~ Weekday + ScanCount + DepartmentDescription, data=df.train.simple, method="rf")
 model.simple.rf.1
 saveRDS(model.simple.rf.1, "./results/model.simple.rf.1.rds")
